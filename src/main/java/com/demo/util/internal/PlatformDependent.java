@@ -1,10 +1,14 @@
 package com.demo.util.internal;
 
 import com.demo.util.CharsetUtil;
+import org.jctools.queues.MpscArrayQueue;
 import org.jctools.queues.MpscChunkedArrayQueue;
 import org.jctools.queues.MpscUnboundedArrayQueue;
+import org.jctools.queues.SpscLinkedQueue;
+import org.jctools.queues.atomic.MpscAtomicArrayQueue;
 import org.jctools.queues.atomic.MpscGrowableAtomicArrayQueue;
 import org.jctools.queues.atomic.MpscUnboundedAtomicArrayQueue;
+import org.jctools.queues.atomic.SpscLinkedAtomicQueue;
 import org.jctools.util.Pow2;
 import org.jctools.util.UnsafeAccess;
 
@@ -789,6 +793,38 @@ public final class PlatformDependent {
         }
     }
 
+    /**
+     * Create a new {@link Queue} which is safe to use for multiple producers (different threads) and a single
+     * consumer (one thread!).
+     * @return A MPSC queue which may be unbounded.
+     */
+    public static <T> Queue<T> newMpscQueue() {
+        return Mpsc.newMpscQueue();
+    }
+
+    /**
+     * Create a new {@link Queue} which is safe to use for multiple producers (different threads) and a single
+     * consumer (one thread!).
+     */
+    public static <T> Queue<T> newMpscQueue(final int maxCapacity) {
+        return Mpsc.newMpscQueue(maxCapacity);
+    }
+
+    /**
+     * Create a new {@link Queue} which is safe to use for single producer (one thread!) and a single
+     * consumer (one thread!).
+     */
+    public static <T> Queue<T> newSpscQueue() {
+        return hasUnsafe() ? new SpscLinkedQueue<T>() : new SpscLinkedAtomicQueue<T>();
+    }
+
+    /**
+     * Create a new {@link Queue} which is safe to use for multiple producers (different threads) and a single
+     * consumer (one thread!) with the given fixes {@code capacity}.
+     */
+    public static <T> Queue<T> newFixedMpscQueue(int capacity) {
+        return hasUnsafe() ? new MpscArrayQueue<T>(capacity) : new MpscAtomicArrayQueue<T>(capacity);
+    }
 
     /**
      * Return the {@link ClassLoader} for the given {@link Class}.
