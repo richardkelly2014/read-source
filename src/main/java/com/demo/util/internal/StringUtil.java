@@ -1,9 +1,34 @@
 package com.demo.util.internal;
 
+import static com.demo.util.internal.ObjectUtil.checkNotNull;
+
 /**
  * Created by jiangfei on 2019/10/16.
  */
 public final class StringUtil {
+
+    private static final char PACKAGE_SEPARATOR_CHAR = '.';
+
+    public static String simpleClassName(Object o) {
+        if (o == null) {
+            return "null_object";
+        } else {
+            return simpleClassName(o.getClass());
+        }
+    }
+
+    /**
+     * Generates a simplified name from a {@link Class}.  Similar to {@link Class#getSimpleName()}, but it works fine
+     * with anonymous classes.
+     */
+    public static String simpleClassName(Class<?> clazz) {
+        String className = checkNotNull(clazz, "clazz").getName();
+        final int lastDotIdx = className.lastIndexOf(PACKAGE_SEPARATOR_CHAR);
+        if (lastDotIdx > -1) {
+            return className.substring(lastDotIdx + 1);
+        }
+        return className;
+    }
 
     public static byte decodeHexByte(CharSequence s, int pos) {
         int hi = decodeHexNibble(s.charAt(pos));
