@@ -10,7 +10,7 @@ import java.io.IOException;
  */
 public class GlobalEventExectorTest {
     @Test
-    public void test1() throws IOException {
+    public void test1() throws IOException, InterruptedException {
 
         GlobalEventExecutor eventExecutors = GlobalEventExecutor.INSTANCE;
         for (int i = 0; i < 10; i++) {
@@ -23,7 +23,19 @@ public class GlobalEventExectorTest {
             });
 
         }
-        System.in.read();
+        //System.in.read();
+        Thread.sleep(5000);
+
+        for (int i = 0; i < 10; i++) {
+            final int v = i;
+            eventExecutors.execute(new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println("====>" + v);
+                }
+            });
+
+        }
     }
 
 }

@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by jiangfei on 2019/10/19.
  */
-public abstract class AbstractEventExecutor extends AbstractExecutorService implements EventExecutor{
+public abstract class AbstractEventExecutor extends AbstractExecutorService implements EventExecutor {
 
     static final long DEFAULT_SHUTDOWN_QUIET_PERIOD = 2;
     static final long DEFAULT_SHUTDOWN_TIMEOUT = 15;

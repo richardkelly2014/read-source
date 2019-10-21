@@ -19,6 +19,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
             new Comparator<ScheduledFutureTask<?>>() {
                 @Override
                 public int compare(ScheduledFutureTask<?> o1, ScheduledFutureTask<?> o2) {
+
                     return o1.compareTo(o2);
                 }
             };
@@ -36,10 +37,12 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
     }
 
     protected static long nanoTime() {
+
         return ScheduledFutureTask.nanoTime();
     }
 
     protected static long deadlineToDelayNanos(long deadlineNanos) {
+
         return ScheduledFutureTask.deadlineToDelayNanos(deadlineNanos);
     }
 
@@ -48,6 +51,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
      * @return initial value used for delay and computations based upon a monatomic time source.
      */
     protected static long initialNanoTime() {
+
         return ScheduledFutureTask.initialNanoTime();
     }
 
@@ -63,6 +67,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
     }
 
     private static boolean isNullOrEmpty(Queue<ScheduledFutureTask<?>> queue) {
+
         return queue == null || queue.isEmpty();
     }
 
@@ -84,6 +89,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
     }
 
     protected final Runnable pollScheduledTask() {
+
         return pollScheduledTask(nanoTime());
     }
 

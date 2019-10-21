@@ -674,9 +674,6 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                         reject = true;
                     }
                 } catch (UnsupportedOperationException e) {
-                    // The task queue does not support removal so the best thing we can do is to just move on and
-                    // hope we will be able to pick-up the task before its completely terminated.
-                    // In worst case we will log on termination.
                 }
                 if (reject) {
                     reject();
@@ -837,15 +834,6 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                         }
                     }
 
-                    // Check if confirmShutdown() was called at the end of the loop.
-                    if (success && gracefulShutdownStartTime == 0) {
-//                        if (logger.isErrorEnabled()) {
-//                            logger.error("Buggy " + EventExecutor.class.getSimpleName() + " implementation; " +
-//                                    SingleThreadEventExecutor.class.getSimpleName() + ".confirmShutdown() must " +
-//                                    "be called before run() implementation terminates.");
-//                        }
-                    }
-
                     try {
                         // Run all remaining tasks and shutdown hooks.
                         for (; ; ) {
@@ -857,18 +845,10 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                         try {
                             cleanup();
                         } finally {
-                            // Lets remove all FastThreadLocals for the Thread as we are about to terminate and notify
-                            // the future. The user may block on the future and once it unblocks the JVM may terminate
-                            // and start unloading classes.
-                            // See https://github.com/netty/netty/issues/6596.
                             FastThreadLocal.removeAll();
 
                             STATE_UPDATER.set(SingleThreadEventExecutor.this, ST_TERMINATED);
                             threadLock.countDown();
-//                            if (logger.isWarnEnabled() && !taskQueue.isEmpty()) {
-//                                logger.warn("An event executor terminated with " +
-//                                        "non-empty task queue (" + taskQueue.size() + ')');
-//                            }
                             terminationFuture.setSuccess(null);
                         }
                     }

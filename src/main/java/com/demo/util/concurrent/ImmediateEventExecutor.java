@@ -5,6 +5,7 @@ import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 立刻执行
  * Created by jiangfei on 2019/10/20.
  */
 public class ImmediateEventExecutor extends AbstractEventExecutor {
