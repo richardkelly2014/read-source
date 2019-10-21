@@ -9,12 +9,14 @@ import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 延迟任务和计划任务
  * Created by jiangfei on 2019/10/19.
  */
 final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFuture<V>, PriorityQueueNode {
     private static final long START_TIME = System.nanoTime();
 
     static long nanoTime() {
+
         return System.nanoTime() - START_TIME;
     }
 
@@ -79,10 +81,12 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
     }
 
     public long delayNanos() {
+
         return deadlineToDelayNanos(deadlineNanos());
     }
 
     static long deadlineToDelayNanos(long deadlineNanos) {
+
         return Math.max(0, deadlineNanos - nanoTime());
     }
 
