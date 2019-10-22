@@ -1,0 +1,29 @@
+package com.demo.resolver;
+
+import com.demo.util.concurrent.EventExecutor;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+
+public abstract class InetNameResolver extends SimpleNameResolver<InetAddress> {
+
+    private volatile AddressResolver<InetSocketAddress> addressResolver;
+
+    protected InetNameResolver(EventExecutor executor) {
+
+        super(executor);
+    }
+
+    public AddressResolver<InetSocketAddress> asAddressResolver() {
+        AddressResolver<InetSocketAddress> result = addressResolver;
+        if (result == null) {
+            synchronized (this) {
+                result = addressResolver;
+                if (result == null) {
+                    addressResolver = result = new InetSocketAddressResolver(executor(), this);
+                }
+            }
+        }
+        return result;
+    }
+}
