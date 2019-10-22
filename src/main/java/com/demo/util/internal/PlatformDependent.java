@@ -344,10 +344,12 @@ public final class PlatformDependent {
      * the current platform does not support this operation or the specified buffer is not a direct buffer.
      */
     public static void freeDirectBuffer(ByteBuffer buffer) {
+
         CLEANER.freeDirectBuffer(buffer);
     }
 
     public static long directBufferAddress(ByteBuffer buffer) {
+
         return PlatformDependent0.directBufferAddress(buffer);
     }
 
@@ -496,6 +498,7 @@ public final class PlatformDependent {
     }
 
     public static void putByte(long address, byte value) {
+
         PlatformDependent0.putByte(address, value);
     }
 
