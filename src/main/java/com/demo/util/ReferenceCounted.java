@@ -1,5 +1,8 @@
 package com.demo.util;
 
+/**
+ * 应用计数
+ */
 public interface ReferenceCounted {
 
     int refCnt();
