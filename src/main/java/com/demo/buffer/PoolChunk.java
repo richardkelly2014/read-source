@@ -1,3 +1,4 @@
+/*
 package com.demo.buffer;
 
 import java.nio.ByteBuffer;
@@ -15,7 +16,9 @@ final class PoolChunk<T> implements PoolChunkMetric {
     private final byte[] memoryMap;
     private final byte[] depthMap;
     private final PoolSubpage<T>[] subpages;
-    /** Used to determine if the requested capacity is equal to or greater than pageSize. */
+    */
+/** Used to determine if the requested capacity is equal to or greater than pageSize. *//*
+
     private final int subpageOverflowMask;
     private final int pageSize;
     private final int pageShifts;
@@ -23,7 +26,9 @@ final class PoolChunk<T> implements PoolChunkMetric {
     private final int chunkSize;
     private final int log2ChunkSize;
     private final int maxSubpageAllocs;
-    /** Used to mark memory as unusable */
+    */
+/** Used to mark memory as unusable *//*
+
     private final byte unusable;
 
     private final Deque<ByteBuffer> cachedNioBuffers;
@@ -34,3 +39,4 @@ final class PoolChunk<T> implements PoolChunkMetric {
     PoolChunk<T> prev;
     PoolChunk<T> next;
 }
+*/
