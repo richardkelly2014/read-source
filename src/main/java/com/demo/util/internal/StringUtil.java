@@ -27,7 +27,9 @@ public final class StringUtil {
     private static final int CSV_NUMBER_ESCAPE_CHARACTERS = 2 + 5;
     private static final char PACKAGE_SEPARATOR_CHAR = '.';
 
-
+    public static boolean isSurrogate(char c) {
+        return c >= '\uD800' && c <= '\uDFFF';
+    }
 
     public static String simpleClassName(Object o) {
         if (o == null) {
