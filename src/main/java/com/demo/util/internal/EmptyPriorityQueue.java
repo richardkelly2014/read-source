@@ -31,6 +31,7 @@ public final class EmptyPriorityQueue<T> implements PriorityQueue<T> {
      */
     @SuppressWarnings("unchecked")
     public static <V> EmptyPriorityQueue<V> instance() {
+
         return (EmptyPriorityQueue<V>) INSTANCE;
     }
 

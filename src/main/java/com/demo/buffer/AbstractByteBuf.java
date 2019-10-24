@@ -1239,12 +1239,20 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return copy(readerIndex, readableBytes());
     }
 
+    /**
+     * 复制
+     *
+     * @return
+     */
     @Override
     public ByteBuf duplicate() {
         ensureAccessible();
         return new UnpooledDuplicatedByteBuf(this);
     }
 
+    /**
+     * 保留复制
+     **/
     @Override
     public ByteBuf retainedDuplicate() {
         return duplicate().retain();
