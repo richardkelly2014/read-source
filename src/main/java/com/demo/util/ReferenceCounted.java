@@ -5,6 +5,10 @@ package com.demo.util;
  */
 public interface ReferenceCounted {
 
+    /**
+     * 111
+     * @return
+     */
     int refCnt();
 
     ReferenceCounted retain();
