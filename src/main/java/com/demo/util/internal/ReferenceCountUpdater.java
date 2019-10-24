@@ -81,10 +81,12 @@ public abstract class ReferenceCountUpdater<T extends ReferenceCounted> {
      * Resets the reference count to 1
      */
     public final void resetRefCnt(T instance) {
+
         updater().set(instance, initialValue());
     }
 
     public final T retain(T instance) {
+
         return retain0(instance, 1, 2);
     }
 
