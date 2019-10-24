@@ -6,7 +6,7 @@ package com.demo.util;
 public interface ReferenceCounted {
 
     /**
-     * 111
+     * 1112222
      * @return
      */
     int refCnt();
