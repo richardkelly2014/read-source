@@ -377,6 +377,7 @@ final class PlatformDependent0 {
         return DIRECT_BUFFER_CONSTRUCTOR != null;
     }
 
+    //重新分配大小，并将原来数据拷贝到新的内存里
     static ByteBuffer reallocateDirectNoCleaner(ByteBuffer buffer, int capacity) {
         return newDirectBuffer(UNSAFE.reallocateMemory(directBufferAddress(buffer), capacity), capacity);
     }

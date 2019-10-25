@@ -7,6 +7,9 @@ import com.demo.util.internal.PlatformDependent;
 import com.demo.util.internal.StringUtil;
 import com.demo.util.internal.SystemPropertyUtil;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -64,6 +67,11 @@ public final class ByteBufUtil {
 //        logger.debug("-Dio.netty.maxThreadLocalCharBufferSize: {}", MAX_CHAR_BUFFER_SIZE);
     }
 
+    static byte[] threadLocalTempArray(int minLength) {
+        return minLength <= MAX_TL_ARRAY_LEN ? BYTE_ARRAYS.get()
+                : PlatformDependent.allocateUninitializedArray(minLength);
+    }
+
     public static int hashCode(ByteBuf buffer) {
         final int aLen = buffer.readableBytes();
         final int intCount = aLen >>> 2;
@@ -72,19 +80,19 @@ public final class ByteBufUtil {
         int hashCode = EmptyByteBuf.EMPTY_BYTE_BUF_HASH_CODE;
         int arrayIndex = buffer.readerIndex();
         if (buffer.order() == ByteOrder.BIG_ENDIAN) {
-            for (int i = intCount; i > 0; i --) {
+            for (int i = intCount; i > 0; i--) {
                 hashCode = 31 * hashCode + buffer.getInt(arrayIndex);
                 arrayIndex += 4;
             }
         } else {
-            for (int i = intCount; i > 0; i --) {
+            for (int i = intCount; i > 0; i--) {
                 hashCode = 31 * hashCode + swapInt(buffer.getInt(arrayIndex));
                 arrayIndex += 4;
             }
         }
 
-        for (int i = byteCount; i > 0; i --) {
-            hashCode = 31 * hashCode + buffer.getByte(arrayIndex ++);
+        for (int i = byteCount; i > 0; i--) {
+            hashCode = 31 * hashCode + buffer.getByte(arrayIndex++);
         }
 
         if (hashCode == 0) {
@@ -92,6 +100,21 @@ public final class ByteBufUtil {
         }
 
         return hashCode;
+    }
+
+    public static short swapShort(short value) {
+        return Short.reverseBytes(value);
+    }
+
+    /**
+     * Toggles the endianness of the specified 24-bit medium integer.
+     */
+    public static int swapMedium(int value) {
+        int swapped = value << 16 & 0xff0000 | value & 0xff00 | value >>> 16 & 0xff;
+        if ((swapped & 0x800000) != 0) {
+            swapped |= 0xff000000;
+        }
+        return swapped;
     }
 
     public static int swapInt(int value) {
@@ -114,7 +137,7 @@ public final class ByteBufUtil {
         final int byteCount = length & 7;
 
         if (a.order() == b.order()) {
-            for (int i = longCount; i > 0; i --) {
+            for (int i = longCount; i > 0; i--) {
                 if (a.getLong(aStartIndex) != b.getLong(bStartIndex)) {
                     return false;
                 }
@@ -122,7 +145,7 @@ public final class ByteBufUtil {
                 bStartIndex += 8;
             }
         } else {
-            for (int i = longCount; i > 0; i --) {
+            for (int i = longCount; i > 0; i--) {
                 if (a.getLong(aStartIndex) != swapLong(b.getLong(bStartIndex))) {
                     return false;
                 }
@@ -131,12 +154,12 @@ public final class ByteBufUtil {
             }
         }
 
-        for (int i = byteCount; i > 0; i --) {
+        for (int i = byteCount; i > 0; i--) {
             if (a.getByte(aStartIndex) != b.getByte(bStartIndex)) {
                 return false;
             }
-            aStartIndex ++;
-            bStartIndex ++;
+            aStartIndex++;
+            bStartIndex++;
         }
 
         return true;
@@ -214,7 +237,7 @@ public final class ByteBufUtil {
     private static long compareUintBigEndianA(
             ByteBuf bufferA, ByteBuf bufferB, int aIndex, int bIndex, int uintCountIncrement) {
         for (int aEnd = aIndex + uintCountIncrement; aIndex < aEnd; aIndex += 4, bIndex += 4) {
-            long comp =  bufferA.getUnsignedInt(aIndex) - bufferB.getUnsignedIntLE(bIndex);
+            long comp = bufferA.getUnsignedInt(aIndex) - bufferB.getUnsignedIntLE(bIndex);
             if (comp != 0) {
                 return comp;
             }
@@ -225,7 +248,7 @@ public final class ByteBufUtil {
     private static long compareUintBigEndianB(
             ByteBuf bufferA, ByteBuf bufferB, int aIndex, int bIndex, int uintCountIncrement) {
         for (int aEnd = aIndex + uintCountIncrement; aIndex < aEnd; aIndex += 4, bIndex += 4) {
-            long comp =  bufferA.getUnsignedIntLE(aIndex) - bufferB.getUnsignedInt(bIndex);
+            long comp = bufferA.getUnsignedIntLE(aIndex) - bufferB.getUnsignedInt(bIndex);
             if (comp != 0) {
                 return comp;
             }
@@ -372,6 +395,41 @@ public final class ByteBufUtil {
         } else {
             return ThreadLocalDirectByteBuf.newInstance();
         }
+    }
+
+
+    static void readBytes(ByteBufAllocator allocator, ByteBuffer buffer, int position, int length, OutputStream out)
+            throws IOException {
+        if (buffer.hasArray()) {
+            out.write(buffer.array(), position + buffer.arrayOffset(), length);
+        } else {
+            int chunkLen = Math.min(length, WRITE_CHUNK_SIZE);
+            buffer.clear().position(position);
+
+            if (length <= MAX_TL_ARRAY_LEN || !allocator.isDirectBufferPooled()) {
+                getBytes(buffer, threadLocalTempArray(chunkLen), 0, chunkLen, out, length);
+            } else {
+                // if direct buffers are pooled chances are good that heap buffers are pooled as well.
+                ByteBuf tmpBuf = allocator.heapBuffer(chunkLen);
+                try {
+                    byte[] tmp = tmpBuf.array();
+                    int offset = tmpBuf.arrayOffset();
+                    getBytes(buffer, tmp, offset, chunkLen, out, length);
+                } finally {
+                    tmpBuf.release();
+                }
+            }
+        }
+    }
+
+    private static void getBytes(ByteBuffer inBuffer, byte[] in, int inOffset, int inLen, OutputStream out, int outLen)
+            throws IOException {
+        do {
+            int len = Math.min(inLen, outLen);
+            inBuffer.get(in, inOffset, len);
+            out.write(in, inOffset, len);
+            outLen -= len;
+        } while (outLen > 0);
     }
 
 }
