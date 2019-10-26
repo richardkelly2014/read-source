@@ -133,7 +133,7 @@ public final class Unpooled {
         return wrappedBuffer(buffers.length, buffers);
     }
 
-    static <T> ByteBuf wrappedBuffer(int maxNumComponents, ByteWrapper<T> wrapper, T[] array) {
+    static <T> ByteBuf wrappedBuffer(int maxNumComponents, CompositeByteBuf.ByteWrapper<T> wrapper, T[] array) {
         switch (array.length) {
             case 0:
                 break;
