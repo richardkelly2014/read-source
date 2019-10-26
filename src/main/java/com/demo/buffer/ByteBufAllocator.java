@@ -35,6 +35,33 @@ public interface ByteBufAllocator {
 
     ByteBuf directBuffer(int initialCapacity, int maxCapacity);
 
+    CompositeByteBuf compositeBuffer();
+
+    /**
+     * Allocate a {@link CompositeByteBuf} with the given maximum number of components that can be stored in it.
+     * If it is a direct or heap buffer depends on the actual implementation.
+     */
+    CompositeByteBuf compositeBuffer(int maxNumComponents);
+
+    /**
+     * Allocate a heap {@link CompositeByteBuf}.
+     */
+    CompositeByteBuf compositeHeapBuffer();
+
+    /**
+     * Allocate a heap {@link CompositeByteBuf} with the given maximum number of components that can be stored in it.
+     */
+    CompositeByteBuf compositeHeapBuffer(int maxNumComponents);
+
+    /**
+     * Allocate a direct {@link CompositeByteBuf}.
+     */
+    CompositeByteBuf compositeDirectBuffer();
+
+    /**
+     * Allocate a direct {@link CompositeByteBuf} with the given maximum number of components that can be stored in it.
+     */
+    CompositeByteBuf compositeDirectBuffer(int maxNumComponents);
 
 
     /**

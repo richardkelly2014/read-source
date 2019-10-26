@@ -43,6 +43,22 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
         setIndex(0, 0);
     }
 
+    protected UnpooledHeapByteBuf(ByteBufAllocator alloc, byte[] initialArray, int maxCapacity) {
+        super(maxCapacity);
+
+        checkNotNull(alloc, "alloc");
+        checkNotNull(initialArray, "initialArray");
+
+        if (initialArray.length > maxCapacity) {
+            throw new IllegalArgumentException(String.format(
+                    "initialCapacity(%d) > maxCapacity(%d)", initialArray.length, maxCapacity));
+        }
+
+        this.alloc = alloc;
+        setArray(initialArray);
+        setIndex(0, initialArray.length);
+    }
+
     //分配数组
     protected byte[] allocateArray(int initialCapacity) {
         return new byte[initialCapacity];

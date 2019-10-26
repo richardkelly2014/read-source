@@ -2,6 +2,8 @@ package com.demo.buffer;
 
 import com.demo.util.AsciiString;
 import com.demo.util.CharsetUtil;
+import com.demo.util.Recycler;
+import com.demo.util.Recycler.Handle;
 import com.demo.util.concurrent.FastThreadLocal;
 import com.demo.util.internal.PlatformDependent;
 import com.demo.util.internal.StringUtil;
@@ -11,7 +13,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CoderResult;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -51,12 +57,14 @@ public final class ByteBufUtil {
             alloc = UnpooledByteBufAllocator.DEFAULT;
             //logger.debug("-Dio.netty.allocator.type: {}", allocType);
         } else if ("pooled".equals(allocType)) {
-            alloc = PooledByteBufAllocator.DEFAULT;
+            //todo
+            //alloc = PooledByteBufAllocator.DEFAULT;
             //    logger.debug("-Dio.netty.allocator.type: {}", allocType);
         } else {
-            alloc = PooledByteBufAllocator.DEFAULT;
+            //alloc = PooledByteBufAllocator.DEFAULT;
             //  logger.debug("-Dio.netty.allocator.type: pooled (unknown: {})", allocType);
         }
+        alloc = UnpooledByteBufAllocator.DEFAULT;
 
         DEFAULT_ALLOCATOR = alloc;
 
@@ -363,6 +371,44 @@ public final class ByteBufUtil {
         return utf8MaxBytes(seq.length());
     }
 
+    public static ByteBuf encodeString(ByteBufAllocator alloc, CharBuffer src, Charset charset, int extraCapacity) {
+        return encodeString0(alloc, false, src, charset, extraCapacity);
+    }
+
+    static ByteBuf encodeString0(ByteBufAllocator alloc, boolean enforceHeap, CharBuffer src, Charset charset,
+                                 int extraCapacity) {
+        final CharsetEncoder encoder = CharsetUtil.encoder(charset);
+        int length = (int) ((double) src.remaining() * encoder.maxBytesPerChar()) + extraCapacity;
+        boolean release = true;
+        final ByteBuf dst;
+        if (enforceHeap) {
+            dst = alloc.heapBuffer(length);
+        } else {
+            dst = alloc.buffer(length);
+        }
+        try {
+            final ByteBuffer dstBuf = dst.internalNioBuffer(dst.readerIndex(), length);
+            final int pos = dstBuf.position();
+            CoderResult cr = encoder.encode(src, dstBuf, true);
+            if (!cr.isUnderflow()) {
+                cr.throwException();
+            }
+            cr = encoder.flush(dstBuf);
+            if (!cr.isUnderflow()) {
+                cr.throwException();
+            }
+            dst.writerIndex(dst.writerIndex() + dstBuf.position() - pos);
+            release = false;
+            return dst;
+        } catch (CharacterCodingException x) {
+            throw new IllegalStateException(x);
+        } finally {
+            if (release) {
+                dst.release();
+            }
+        }
+    }
+
     static String decodeString(ByteBuf src, int readerIndex, int len, Charset charset) {
         if (len == 0) {
             return StringUtil.EMPTY_STRING;
@@ -430,6 +476,74 @@ public final class ByteBufUtil {
             out.write(in, inOffset, len);
             outLen -= len;
         } while (outLen > 0);
+    }
+
+
+    static final class ThreadLocalUnsafeDirectByteBuf extends UnpooledUnsafeDirectByteBuf {
+
+        private static final Recycler<ThreadLocalUnsafeDirectByteBuf> RECYCLER =
+                new Recycler<ThreadLocalUnsafeDirectByteBuf>() {
+                    @Override
+                    protected ThreadLocalUnsafeDirectByteBuf newObject(Handle<ThreadLocalUnsafeDirectByteBuf> handle) {
+                        return new ThreadLocalUnsafeDirectByteBuf(handle);
+                    }
+                };
+
+        static ThreadLocalUnsafeDirectByteBuf newInstance() {
+            ThreadLocalUnsafeDirectByteBuf buf = RECYCLER.get();
+            buf.resetRefCnt();
+            return buf;
+        }
+
+        private final Handle<ThreadLocalUnsafeDirectByteBuf> handle;
+
+        private ThreadLocalUnsafeDirectByteBuf(Handle<ThreadLocalUnsafeDirectByteBuf> handle) {
+            super(UnpooledByteBufAllocator.DEFAULT, 256, Integer.MAX_VALUE);
+            this.handle = handle;
+        }
+
+        @Override
+        protected void deallocate() {
+            if (capacity() > THREAD_LOCAL_BUFFER_SIZE) {
+                super.deallocate();
+            } else {
+                clear();
+                handle.recycle(this);
+            }
+        }
+    }
+
+    static final class ThreadLocalDirectByteBuf extends UnpooledDirectByteBuf {
+
+        private static final Recycler<ThreadLocalDirectByteBuf> RECYCLER = new Recycler<ThreadLocalDirectByteBuf>() {
+            @Override
+            protected ThreadLocalDirectByteBuf newObject(Handle<ThreadLocalDirectByteBuf> handle) {
+                return new ThreadLocalDirectByteBuf(handle);
+            }
+        };
+
+        static ThreadLocalDirectByteBuf newInstance() {
+            ThreadLocalDirectByteBuf buf = RECYCLER.get();
+            buf.resetRefCnt();
+            return buf;
+        }
+
+        private final Recycler.Handle<ThreadLocalDirectByteBuf> handle;
+
+        private ThreadLocalDirectByteBuf(Handle<ThreadLocalDirectByteBuf> handle) {
+            super(UnpooledByteBufAllocator.DEFAULT, 256, Integer.MAX_VALUE);
+            this.handle = handle;
+        }
+
+        @Override
+        protected void deallocate() {
+            if (capacity() > THREAD_LOCAL_BUFFER_SIZE) {
+                super.deallocate();
+            } else {
+                clear();
+                handle.recycle(this);
+            }
+        }
     }
 
 }
