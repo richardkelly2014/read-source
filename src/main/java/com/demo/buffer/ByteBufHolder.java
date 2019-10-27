@@ -3,6 +3,7 @@ package com.demo.buffer;
 import com.demo.util.ReferenceCounted;
 
 /**
+ * ByteBuf 持有者
  * Created by jiangfei on 2019/10/25.
  */
 public interface ByteBufHolder extends ReferenceCounted {
