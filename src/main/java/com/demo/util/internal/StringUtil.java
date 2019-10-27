@@ -1,5 +1,7 @@
 package com.demo.util.internal;
 
+import java.io.IOException;
+
 import static com.demo.util.internal.ObjectUtil.checkNotNull;
 
 /**
@@ -30,6 +32,24 @@ public final class StringUtil {
     public static boolean isSurrogate(char c) {
         return c >= '\uD800' && c <= '\uDFFF';
     }
+
+
+    public static String byteToHexStringPadded(int value) {
+        return BYTE2HEX_PAD[value & 0xff];
+    }
+
+    /**
+     * Converts the specified byte value into a 2-digit hexadecimal integer and appends it to the specified buffer.
+     */
+    public static <T extends Appendable> T byteToHexStringPadded(T buf, int value) {
+        try {
+            buf.append(byteToHexStringPadded(value));
+        } catch (IOException e) {
+            PlatformDependent.throwException(e);
+        }
+        return buf;
+    }
+
 
     public static String simpleClassName(Object o) {
         if (o == null) {
