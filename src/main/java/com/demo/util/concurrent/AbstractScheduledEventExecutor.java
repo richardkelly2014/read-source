@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 延迟任务 执行器
  * Created by jiangfei on 2019/10/20.
  */
 public abstract class AbstractScheduledEventExecutor extends AbstractEventExecutor {
@@ -48,6 +49,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
 
     /**
      * The initial value used for delay and computations based upon a monatomic time source.
+     *
      * @return initial value used for delay and computations based upon a monatomic time source.
      */
     protected static long initialNanoTime() {
@@ -81,7 +83,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         final ScheduledFutureTask<?>[] scheduledTasks =
                 scheduledTaskQueue.toArray(new ScheduledFutureTask<?>[0]);
 
-        for (ScheduledFutureTask<?> task: scheduledTasks) {
+        for (ScheduledFutureTask<?> task : scheduledTasks) {
             task.cancelWithoutRemove(false);
         }
 
