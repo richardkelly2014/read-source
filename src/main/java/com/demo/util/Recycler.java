@@ -1,6 +1,7 @@
 package com.demo.util;
 
 import com.demo.util.concurrent.FastThreadLocal;
+import com.demo.util.internal.ObjectPool;
 import com.demo.util.internal.SystemPropertyUtil;
 
 import java.lang.ref.WeakReference;
@@ -176,9 +177,7 @@ public abstract class Recycler<T> {
             };
 
     //回收处理器
-    public interface Handle<T> {
-        //回收
-        void recycle(T object);
+    public interface Handle<T> extends ObjectPool.Handle<T> {
     }
 
     //default handler

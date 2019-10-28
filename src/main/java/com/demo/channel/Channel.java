@@ -44,6 +44,8 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
 
     long bytesBeforeWritable();
 
+    Unsafe unsafe();
+
     //pipe 通道
     ChannelPipeline pipeline();
 
