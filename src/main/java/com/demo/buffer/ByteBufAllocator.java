@@ -5,6 +5,9 @@ package com.demo.buffer;
  */
 public interface ByteBufAllocator {
 
+    //默认 byteBuf 分配器
+    ByteBufAllocator DEFAULT = ByteBufUtil.DEFAULT_ALLOCATOR;
+
     ByteBuf buffer();
 
     ByteBuf buffer(int initialCapacity);
