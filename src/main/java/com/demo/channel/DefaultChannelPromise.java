@@ -1,31 +1,34 @@
 package com.demo.channel;
 
-import com.demo.util.concurrent.DefaultProgressivePromise;
+import com.demo.util.concurrent.DefaultPromise;
 import com.demo.channel.ChannelFlushPromiseNotifier.FlushCheckpoint;
 import com.demo.util.concurrent.EventExecutor;
 import com.demo.util.concurrent.Future;
 import com.demo.util.concurrent.GenericFutureListener;
 
-/**
- * 默认 channel 处理
- * Created by jiangfei on 2019/10/27.
- */
-public class DefaultChannelProgressivePromise
-        extends DefaultProgressivePromise<Void> implements ChannelProgressivePromise, FlushCheckpoint {
+import static com.demo.util.internal.ObjectUtil.checkNotNull;
 
+/**
+ * Created by jiangfei on 2019/10/28.
+ */
+public class DefaultChannelPromise extends DefaultPromise<Void> implements ChannelPromise, FlushCheckpoint {
 
     private final Channel channel;
     private long checkpoint;
 
+    public DefaultChannelPromise(Channel channel) {
 
-    public DefaultChannelProgressivePromise(Channel channel) {
-
-        this.channel = channel;
+        this.channel = checkNotNull(channel, "channel");
     }
 
-    public DefaultChannelProgressivePromise(Channel channel, EventExecutor executor) {
+    /**
+     * Creates a new instance.
+     *
+     * @param channel the {@link Channel} associated with this future
+     */
+    public DefaultChannelPromise(Channel channel, EventExecutor executor) {
         super(executor);
-        this.channel = channel;
+        this.channel = checkNotNull(channel, "channel");
     }
 
     @Override
@@ -44,12 +47,12 @@ public class DefaultChannelProgressivePromise
     }
 
     @Override
-    public ChannelProgressivePromise setSuccess() {
+    public ChannelPromise setSuccess() {
         return setSuccess(null);
     }
 
     @Override
-    public ChannelProgressivePromise setSuccess(Void result) {
+    public ChannelPromise setSuccess(Void result) {
         super.setSuccess(result);
         return this;
     }
@@ -60,62 +63,55 @@ public class DefaultChannelProgressivePromise
     }
 
     @Override
-    public ChannelProgressivePromise setFailure(Throwable cause) {
+    public ChannelPromise setFailure(Throwable cause) {
         super.setFailure(cause);
         return this;
     }
 
     @Override
-    public ChannelProgressivePromise setProgress(long progress, long total) {
-        super.setProgress(progress, total);
-        return this;
-    }
-
-    @Override
-    public ChannelProgressivePromise addListener(GenericFutureListener<? extends Future<? super Void>> listener) {
+    public ChannelPromise addListener(GenericFutureListener<? extends Future<? super Void>> listener) {
         super.addListener(listener);
         return this;
     }
 
     @Override
-    public ChannelProgressivePromise addListeners(GenericFutureListener<? extends Future<? super Void>>... listeners) {
+    public ChannelPromise addListeners(GenericFutureListener<? extends Future<? super Void>>... listeners) {
         super.addListeners(listeners);
         return this;
     }
 
     @Override
-    public ChannelProgressivePromise removeListener(GenericFutureListener<? extends Future<? super Void>> listener) {
+    public ChannelPromise removeListener(GenericFutureListener<? extends Future<? super Void>> listener) {
         super.removeListener(listener);
         return this;
     }
 
     @Override
-    public ChannelProgressivePromise removeListeners(
-            GenericFutureListener<? extends Future<? super Void>>... listeners) {
+    public ChannelPromise removeListeners(GenericFutureListener<? extends Future<? super Void>>... listeners) {
         super.removeListeners(listeners);
         return this;
     }
 
     @Override
-    public ChannelProgressivePromise sync() throws InterruptedException {
+    public ChannelPromise sync() throws InterruptedException {
         super.sync();
         return this;
     }
 
     @Override
-    public ChannelProgressivePromise syncUninterruptibly() {
+    public ChannelPromise syncUninterruptibly() {
         super.syncUninterruptibly();
         return this;
     }
 
     @Override
-    public ChannelProgressivePromise await() throws InterruptedException {
+    public ChannelPromise await() throws InterruptedException {
         super.await();
         return this;
     }
 
     @Override
-    public ChannelProgressivePromise awaitUninterruptibly() {
+    public ChannelPromise awaitUninterruptibly() {
         super.awaitUninterruptibly();
         return this;
     }
@@ -131,7 +127,7 @@ public class DefaultChannelProgressivePromise
     }
 
     @Override
-    public ChannelProgressivePromise promise() {
+    public ChannelPromise promise() {
         return this;
     }
 
@@ -143,7 +139,7 @@ public class DefaultChannelProgressivePromise
     }
 
     @Override
-    public ChannelProgressivePromise unvoid() {
+    public ChannelPromise unvoid() {
         return this;
     }
 
@@ -151,5 +147,4 @@ public class DefaultChannelProgressivePromise
     public boolean isVoid() {
         return false;
     }
-
 }

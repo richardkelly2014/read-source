@@ -7,10 +7,7 @@ import com.demo.util.ReferenceCountUtil;
 import com.demo.util.ResourceLeakHint;
 import com.demo.util.concurrent.EventExecutor;
 import com.demo.util.concurrent.OrderedEventExecutor;
-import com.demo.util.internal.ObjectPool;
-import com.demo.util.internal.ObjectUtil;
-import com.demo.util.internal.StringUtil;
-import com.demo.util.internal.SystemPropertyUtil;
+import com.demo.util.internal.*;
 
 import java.net.SocketAddress;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
@@ -752,7 +749,7 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
             final AbstractWriteTask task;
             if (flush) {
                 task = WriteAndFlushTask.newInstance(next, m, promise);
-            }  else {
+            } else {
                 task = WriteTask.newInstance(next, m, promise);
             }
             if (!safeExecute(executor, task, promise, m)) {
@@ -774,7 +771,7 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
     private static void notifyOutboundHandlerException(Throwable cause, ChannelPromise promise) {
         // Only log if the given promise is not of type VoidChannelPromise as tryFailure(...) is expected to return
         // false.
-        PromiseNotificationUtil.tryFailure(promise, cause, promise instanceof VoidChannelPromise ? null : logger);
+        PromiseNotificationUtil.tryFailure(promise, cause);
     }
 
 
@@ -1091,7 +1088,7 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
                 });
 
         static WriteAndFlushTask newInstance(
-                AbstractChannelHandlerContext ctx, Object msg,  ChannelPromise promise) {
+                AbstractChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
             WriteAndFlushTask task = RECYCLER.get();
             init(task, ctx, msg, promise);
             return task;
@@ -1107,7 +1104,6 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
             ctx.invokeFlush();
         }
     }
-
 
 
     private static final class Tasks {
