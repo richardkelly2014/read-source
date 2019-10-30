@@ -3,6 +3,7 @@ package com.demo.channel;
 import com.demo.util.concurrent.AbstractEventExecutor;
 
 /**
+ * 事件 循环器
  * Created by jiangfei on 2019/10/28.
  */
 public abstract class AbstractEventLoop extends AbstractEventExecutor implements EventLoop {
