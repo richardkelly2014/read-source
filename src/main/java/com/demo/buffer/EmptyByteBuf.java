@@ -81,8 +81,8 @@ public final class EmptyByteBuf extends ByteBuf {
 
     @Override
     public ByteBuf asReadOnly() {
-        //todo return Unpooled.unmodifiableBuffer(this);
-        return null;
+
+        return Unpooled.unmodifiableBuffer(this);
     }
 
     @Override

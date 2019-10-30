@@ -370,6 +370,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
 
     // 抽象 UnSafe
+    // todo 重点标志：
     protected abstract class AbstractUnsafe implements Unsafe {
 
     }
