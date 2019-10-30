@@ -54,6 +54,7 @@ public class DefaultChannelId implements ChannelId {
             processId = defaultProcessId();
         }
 
+        //进程id
         PROCESS_ID = processId;
 
         byte[] machineId = null;
@@ -73,6 +74,7 @@ public class DefaultChannelId implements ChannelId {
             machineId = defaultMachineId();
         }
 
+        //mac id
         MACHINE_ID = machineId;
     }
 

@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 /**
+ * //todo 关注 channel 出站 buffer
  * 通道 输出 buffer
  * Created by jiangfei on 2019/10/27.
  */
@@ -28,6 +29,7 @@ public final class ChannelOutboundBuffer {
 
     private static final AtomicLongFieldUpdater<ChannelOutboundBuffer> TOTAL_PENDING_SIZE_UPDATER =
             AtomicLongFieldUpdater.newUpdater(ChannelOutboundBuffer.class, "totalPendingSize");
+
     private volatile long totalPendingSize;
 
     private static final AtomicIntegerFieldUpdater<ChannelOutboundBuffer> UNWRITABLE_UPDATER =
@@ -36,6 +38,7 @@ public final class ChannelOutboundBuffer {
     @SuppressWarnings("UnusedDeclaration")
     private volatile int unwritable;
 
+    //channel 写改变 任务
     private volatile Runnable fireChannelWritabilityChangedTask;
 
     ChannelOutboundBuffer(AbstractChannel channel) {
@@ -43,6 +46,7 @@ public final class ChannelOutboundBuffer {
         this.channel = channel;
     }
 
+    //增长 出站 字节长度
     void incrementPendingOutboundBytes(long size) {
         incrementPendingOutboundBytes(size, true);
     }
@@ -58,6 +62,7 @@ public final class ChannelOutboundBuffer {
         }
     }
 
+    //减少 出站 字节长度
     void decrementPendingOutboundBytes(long size) {
         decrementPendingOutboundBytes(size, true, true);
     }
@@ -73,9 +78,13 @@ public final class ChannelOutboundBuffer {
         }
     }
 
+    //是否可写的
+    public boolean isWritable() {
+        return unwritable == 0;
+    }
 
     private void setWritable(boolean invokeLater) {
-        for (;;) {
+        for (; ; ) {
             final int oldValue = unwritable;
             final int newValue = oldValue & ~1;
             if (UNWRITABLE_UPDATER.compareAndSet(this, oldValue, newValue)) {
@@ -89,7 +98,7 @@ public final class ChannelOutboundBuffer {
 
 
     private void setUnwritable(boolean invokeLater) {
-        for (;;) {
+        for (; ; ) {
             final int oldValue = unwritable;
             final int newValue = oldValue | 1;
             if (UNWRITABLE_UPDATER.compareAndSet(this, oldValue, newValue)) {
@@ -101,6 +110,7 @@ public final class ChannelOutboundBuffer {
         }
     }
 
+    //触发 任务
     private void fireChannelWritabilityChanged(boolean invokeLater) {
         final ChannelPipeline pipeline = channel.pipeline();
         if (invokeLater) {
@@ -109,6 +119,7 @@ public final class ChannelOutboundBuffer {
                 fireChannelWritabilityChangedTask = task = new Runnable() {
                     @Override
                     public void run() {
+
                         pipeline.fireChannelWritabilityChanged();
                     }
                 };
@@ -117,5 +128,31 @@ public final class ChannelOutboundBuffer {
         } else {
             pipeline.fireChannelWritabilityChanged();
         }
+    }
+
+    public long bytesBeforeUnwritable() {
+        long bytes = channel.config().getWriteBufferHighWaterMark() - totalPendingSize;
+        // If bytes is negative we know we are not writable, but if bytes is non-negative we have to check writability.
+        // Note that totalPendingSize and isWritable() use different volatile variables that are not synchronized
+        // together. totalPendingSize will be updated before isWritable().
+        if (bytes > 0) {
+            return isWritable() ? bytes : 0;
+        }
+        return 0;
+    }
+
+    /**
+     * Get how many bytes must be drained from the underlying buffer until {@link #isWritable()} returns {@code true}.
+     * This quantity will always be non-negative. If {@link #isWritable()} is {@code true} then 0.
+     */
+    public long bytesBeforeWritable() {
+        long bytes = totalPendingSize - channel.config().getWriteBufferLowWaterMark();
+        // If bytes is negative we know we are writable, but if bytes is non-negative we have to check writability.
+        // Note that totalPendingSize and isWritable() use different volatile variables that are not synchronized
+        // together. totalPendingSize will be updated before isWritable().
+        if (bytes > 0) {
+            return isWritable() ? 0 : bytes;
+        }
+        return 0;
     }
 }
