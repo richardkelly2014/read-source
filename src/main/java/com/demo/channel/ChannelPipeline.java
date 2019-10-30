@@ -113,6 +113,8 @@ public interface ChannelPipeline extends
 
     <T extends ChannelHandler> T get(Class<T> handlerType);
 
+    ChannelHandlerContext context(String name);
+
     ChannelHandlerContext context(ChannelHandler handler);
 
     ChannelHandlerContext context(Class<? extends ChannelHandler> handlerType);
