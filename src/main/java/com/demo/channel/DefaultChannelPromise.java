@@ -9,6 +9,7 @@ import com.demo.util.concurrent.GenericFutureListener;
 import static com.demo.util.internal.ObjectUtil.checkNotNull;
 
 /**
+ * 默认 channel future
  * Created by jiangfei on 2019/10/28.
  */
 public class DefaultChannelPromise extends DefaultPromise<Void> implements ChannelPromise, FlushCheckpoint {
