@@ -21,6 +21,7 @@ public class DefaultEventLoopGroup extends MultithreadEventLoopGroup {
      * @param nThreads the number of threads to use
      */
     public DefaultEventLoopGroup(int nThreads) {
+
         this(nThreads, (ThreadFactory) null);
     }
 
@@ -31,6 +32,7 @@ public class DefaultEventLoopGroup extends MultithreadEventLoopGroup {
      * @param threadFactory the {@link ThreadFactory} or {@code null} to use the default
      */
     public DefaultEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
+
         super(nThreads, threadFactory);
     }
 
@@ -41,6 +43,7 @@ public class DefaultEventLoopGroup extends MultithreadEventLoopGroup {
      * @param executor the Executor to use, or {@code null} if the default should be used.
      */
     public DefaultEventLoopGroup(int nThreads, Executor executor) {
+
         super(nThreads, executor);
     }
 

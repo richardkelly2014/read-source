@@ -52,6 +52,7 @@ public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutor
 
     @Override
     public EventLoop next() {
+
         return (EventLoop) super.next();
     }
 
@@ -60,17 +61,20 @@ public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutor
 
     @Override
     public ChannelFuture register(Channel channel) {
+
         return next().register(channel);
     }
 
     @Override
     public ChannelFuture register(ChannelPromise promise) {
+
         return next().register(promise);
     }
 
     @Deprecated
     @Override
     public ChannelFuture register(Channel channel, ChannelPromise promise) {
+
         return next().register(channel, promise);
     }
 

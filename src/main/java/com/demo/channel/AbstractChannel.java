@@ -418,6 +418,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
         }
 
         //注册
+        // todo [入口] channel 与 执行器 产生关联关系
         @Override
         public final void register(EventLoop eventLoop, final ChannelPromise promise) {
             if (eventLoop == null) {

@@ -4,6 +4,7 @@ import com.demo.channel.*;
 
 import java.net.SocketAddress;
 
+//失败channel
 final class FailedChannel extends AbstractChannel {
 
     private static final ChannelMetadata METADATA = new ChannelMetadata(false);

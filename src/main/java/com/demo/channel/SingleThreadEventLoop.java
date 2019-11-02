@@ -61,6 +61,7 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
         return (EventLoop) super.next();
     }
 
+    //todo [入口] 通道与 执行器 产生关联关系
     @Override
     public ChannelFuture register(Channel channel) {
 
