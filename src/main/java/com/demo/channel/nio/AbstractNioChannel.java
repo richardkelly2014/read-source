@@ -1,9 +1,6 @@
 package com.demo.channel.nio;
 
-import com.demo.channel.AbstractChannel;
-import com.demo.channel.Channel;
-import com.demo.channel.ChannelException;
-import com.demo.channel.ChannelPromise;
+import com.demo.channel.*;
 
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -58,6 +55,100 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         }
     }
 
+    @Override
+    public boolean isOpen() {
+
+        return ch.isOpen();
+    }
+
+    @Override
+    public NioUnsafe unsafe() {
+        return (NioUnsafe) super.unsafe();
+    }
+
+    protected SelectableChannel javaChannel() {
+        return ch;
+    }
+
+    @Override
+    public NioEventLoop eventLoop() {
+        return (NioEventLoop) super.eventLoop();
+    }
+
+    /**
+     * Return the current {@link SelectionKey}
+     */
+    protected SelectionKey selectionKey() {
+        assert selectionKey != null;
+        return selectionKey;
+    }
+
+    /**
+     * @deprecated No longer supported.
+     * No longer supported.
+     */
+    @Deprecated
+    protected boolean isReadPending() {
+        return readPending;
+    }
+
+    /**
+     * @deprecated Use {@link #clearReadPending()} if appropriate instead.
+     * No longer supported.
+     */
+    @Deprecated
+    protected void setReadPending(final boolean readPending) {
+        if (isRegistered()) {
+            EventLoop eventLoop = eventLoop();
+            if (eventLoop.inEventLoop()) {
+                setReadPending0(readPending);
+            } else {
+                eventLoop.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        setReadPending0(readPending);
+                    }
+                });
+            }
+        } else {
+            // Best effort if we are not registered yet clear readPending.
+            // NB: We only set the boolean field instead of calling clearReadPending0(), because the SelectionKey is
+            // not set yet so it would produce an assertion failure.
+            this.readPending = readPending;
+        }
+    }
+
+    /**
+     * Set read pending to {@code false}.
+     */
+    protected final void clearReadPending() {
+        if (isRegistered()) {
+            EventLoop eventLoop = eventLoop();
+            if (eventLoop.inEventLoop()) {
+                clearReadPending0();
+            } else {
+                eventLoop.execute(clearReadPendingRunnable);
+            }
+        } else {
+            // Best effort if we are not registered yet clear readPending. This happens during channel initialization.
+            // NB: We only set the boolean field instead of calling clearReadPending0(), because the SelectionKey is
+            // not set yet so it would produce an assertion failure.
+            readPending = false;
+        }
+    }
+
+    private void setReadPending0(boolean readPending) {
+        this.readPending = readPending;
+        if (!readPending) {
+            ((AbstractNioUnsafe) unsafe()).removeReadOp();
+        }
+    }
+
+    //移除 读 key
+    private void clearReadPending0() {
+        readPending = false;
+        ((AbstractNioUnsafe) unsafe()).removeReadOp();
+    }
 
     public interface NioUnsafe extends Unsafe {
         /**
@@ -80,6 +171,28 @@ public abstract class AbstractNioChannel extends AbstractChannel {
 
     //Nio UnSafe
     protected abstract class AbstractNioUnsafe extends AbstractUnsafe implements NioUnsafe {
+        //移除read key
+        protected final void removeReadOp() {
+            SelectionKey key = selectionKey();
+            // Check first if the key is still valid as it may be canceled as part of the deregistration
+            // from the EventLoop
+            // See https://github.com/netty/netty/issues/2104
+            if (!key.isValid()) {
+                return;
+            }
+            int interestOps = key.interestOps();
+            if ((interestOps & readInterestOp) != 0) {
+                // only remove readInterestOp if needed
+                key.interestOps(interestOps & ~readInterestOp);
+            }
+        }
+
+        @Override
+        public final SelectableChannel ch() {
+
+            return javaChannel();
+        }
+
 
     }
 
