@@ -36,6 +36,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
     private SocketAddress requestedRemoteAddress;
 
     //Nio的Channel 与 定义的Channel 进行绑定
+    //todo [关注]2.Nio Channel 与自定义的channel 绑定
     protected AbstractNioChannel(Channel parent, SelectableChannel ch, int readInterestOp) {
         super(parent);
         this.ch = ch;
