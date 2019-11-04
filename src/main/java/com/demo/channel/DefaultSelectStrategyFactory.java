@@ -10,6 +10,7 @@ public final class DefaultSelectStrategyFactory implements SelectStrategyFactory
 
     @Override
     public SelectStrategy newSelectStrategy() {
+
         return DefaultSelectStrategy.INSTANCE;
     }
 }
