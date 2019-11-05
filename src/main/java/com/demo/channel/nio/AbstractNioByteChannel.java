@@ -14,6 +14,7 @@ import java.nio.channels.SelectionKey;
 
 import static com.demo.channel.internal.ChannelUtils.WRITE_STATUS_SNDBUF_FULL;
 
+//NioByte Channel
 public abstract class AbstractNioByteChannel extends AbstractNioChannel {
 
 

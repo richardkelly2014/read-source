@@ -18,7 +18,7 @@ public class DefaultSocketChannelConfig extends DefaultChannelConfig
     protected final Socket javaSocket;
     private volatile boolean allowHalfClosure;
 
-    //todo [关注]1.Socket 与 Channel 绑定关系
+    //todo [关注]1.Socket 与 Channel、Config 绑定关系
     public DefaultSocketChannelConfig(SocketChannel channel, Socket javaSocket) {
         super(channel);
         if (javaSocket == null) {

@@ -46,6 +46,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
     private boolean strValActive;
     private String strVal;
 
+    // base Abstract Channel
+    // 1.新建 channelId
+    // 2.新建 ChannelPipeline
     protected AbstractChannel(Channel parent) {
         this.parent = parent;
         //new id
