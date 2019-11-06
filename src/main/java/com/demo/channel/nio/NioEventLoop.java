@@ -407,6 +407,8 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                             // fall-through to SELECT since the busy-wait is not supported with NIO
 
                         case SelectStrategy.SELECT:
+                            // 重置 wakenUp 标记为 false
+                            //wakenUp标识当前selector是否是唤醒状态
                             select(wakenUp.getAndSet(false));
 
                             if (wakenUp.get()) {
