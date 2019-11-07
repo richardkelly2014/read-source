@@ -1,14 +1,12 @@
 package com.demo.bootstrap;
 
-import com.demo.channel.ChannelHandler;
-import com.demo.channel.ChannelOption;
-import com.demo.channel.EventLoopGroup;
-import com.demo.channel.ServerChannel;
+import com.demo.channel.*;
 import com.demo.util.AttributeKey;
 import com.demo.util.internal.ObjectUtil;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by jiangfei on 2019/11/6.
@@ -80,6 +78,41 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         return this;
     }
 
+    @Override
+    void init(Channel channel) throws Exception {
+        setChannelOptions(channel, options0().entrySet().toArray(newOptionArray(0)));
+        setAttributes(channel, attrs0().entrySet().toArray(newAttrArray(0)));
+
+        ChannelPipeline p = channel.pipeline();
+
+        final EventLoopGroup currentChildGroup = childGroup;
+        final ChannelHandler currentChildHandler = childHandler;
+
+        final Map.Entry<ChannelOption<?>, Object>[] currentChildOptions =
+                childOptions.entrySet().toArray(newOptionArray(0));
+
+        final Map.Entry<AttributeKey<?>, Object>[] currentChildAttrs =
+                childAttrs.entrySet().toArray(newAttrArray(0));
+
+        p.addLast(new ChannelInitializer<Channel>() {
+            @Override
+            public void initChannel(final Channel ch) {
+                final ChannelPipeline pipeline = ch.pipeline();
+                ChannelHandler handler = config.handler();
+                if (handler != null) {
+                    pipeline.addLast(handler);
+                }
+
+                ch.eventLoop().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        pipeline.addLast(new ServerBootstrapAcceptor(
+                                ch, currentChildGroup, currentChildHandler, currentChildOptions, currentChildAttrs));
+                    }
+                });
+            }
+        });
+    }
 
     @Override
     public ServerBootstrap validate() {
@@ -92,6 +125,78 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             childGroup = config.group();
         }
         return this;
+    }
+
+    private static class ServerBootstrapAcceptor extends ChannelInboundHandlerAdapter {
+        private final EventLoopGroup childGroup;
+        private final ChannelHandler childHandler;
+        private final Map.Entry<ChannelOption<?>, Object>[] childOptions;
+        private final Map.Entry<AttributeKey<?>, Object>[] childAttrs;
+        private final Runnable enableAutoReadTask;
+
+        ServerBootstrapAcceptor(
+                final Channel channel, EventLoopGroup childGroup, ChannelHandler childHandler,
+                Map.Entry<ChannelOption<?>, Object>[] childOptions, Map.Entry<AttributeKey<?>, Object>[] childAttrs) {
+            this.childGroup = childGroup;
+            this.childHandler = childHandler;
+            this.childOptions = childOptions;
+            this.childAttrs = childAttrs;
+
+            // Task which is scheduled to re-enable auto-read.
+            // It's important to create this Runnable before we try to submit it as otherwise the URLClassLoader may
+            // not be able to load the class because of the file limit it already reached.
+            //
+            // See https://github.com/netty/netty/issues/1328
+            enableAutoReadTask = new Runnable() {
+                @Override
+                public void run() {
+                    channel.config().setAutoRead(true);
+                }
+            };
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public void channelRead(ChannelHandlerContext ctx, Object msg) {
+            final Channel child = (Channel) msg;
+
+            child.pipeline().addLast(childHandler);
+
+            setChannelOptions(child, childOptions);
+            setAttributes(child, childAttrs);
+
+            try {
+                childGroup.register(child).addListener(new ChannelFutureListener() {
+                    @Override
+                    public void operationComplete(ChannelFuture future) throws Exception {
+                        if (!future.isSuccess()) {
+                            forceClose(child, future.cause());
+                        }
+                    }
+                });
+            } catch (Throwable t) {
+                forceClose(child, t);
+            }
+        }
+
+        private static void forceClose(Channel child, Throwable t) {
+            child.unsafe().closeForcibly();
+            //logger.warn("Failed to register an accepted channel: {}", child, t);
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+            final ChannelConfig config = ctx.channel().config();
+            if (config.isAutoRead()) {
+                // stop accept new connections for 1 second to allow the channel to recover
+                // See https://github.com/netty/netty/issues/1328
+                config.setAutoRead(false);
+                ctx.channel().eventLoop().schedule(enableAutoReadTask, 1, TimeUnit.SECONDS);
+            }
+            // still let the exceptionCaught event flow through the pipeline to give the user
+            // a chance to do something with it
+            ctx.fireExceptionCaught(cause);
+        }
     }
 
     @Override
