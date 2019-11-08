@@ -44,7 +44,8 @@ public final class DefaultEventExecutor extends SingleThreadEventExecutor {
 
     @Override
     protected void run() {
-        for (;;) {
+        for (; ; ) {
+            //一直循环，获取执行任务
             Runnable task = takeTask();
             if (task != null) {
                 task.run();

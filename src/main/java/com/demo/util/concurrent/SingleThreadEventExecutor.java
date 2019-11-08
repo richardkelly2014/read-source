@@ -415,7 +415,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
     @Override
     public boolean inEventLoop(Thread thread) {
-        return thread == this.thread;
+        boolean flag = thread == this.thread;
+        System.out.println("is in run thread :" + flag);
+        return flag;
     }
 
     public void addShutdownHook(final Runnable task) {
@@ -785,6 +787,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
     private static final long SCHEDULE_PURGE_INTERVAL = TimeUnit.SECONDS.toNanos(1);
 
+    //开始
     private void startThread() {
         if (state == ST_NOT_STARTED) {
             if (STATE_UPDATER.compareAndSet(this, ST_NOT_STARTED, ST_STARTED)) {
@@ -821,6 +824,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
     private void doStartThread() {
         assert thread == null;
+        //启动一个线程去执行任务
         executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -837,8 +841,11 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                 } catch (Throwable t) {
                     //logger.warn("Unexpected exception from an event executor: ", t);
                 } finally {
+                    //关闭
                     for (; ; ) {
+
                         int oldState = state;
+                        //判断是否关闭线程执行器
                         if (oldState >= ST_SHUTTING_DOWN || STATE_UPDATER.compareAndSet(
                                 SingleThreadEventExecutor.this, oldState, ST_SHUTTING_DOWN)) {
                             break;
