@@ -15,6 +15,9 @@ import static org.bytedeco.tesseract.global.tesseract.RIL_TEXTLINE;
 import static org.bytedeco.tesseract.global.tesseract.RIL_WORD;
 import static org.bytedeco.tesseract.global.tesseract.TessMonitorCreate;
 
+/**
+ * 图片orc识别
+ */
 public class TessTest {
 
     @Test
@@ -47,7 +50,7 @@ public class TessTest {
      * result iterator
      */
     @Test
-    public void test2(){
+    public void test2() {
 
         BytePointer outText;
 
@@ -86,7 +89,7 @@ public class TessTest {
     }
 
     @Test
-    public void test3(){
+    public void test3() {
 
         BytePointer outText;
 
