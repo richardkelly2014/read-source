@@ -1,6 +1,7 @@
 package com.javacv.test;
 
 import org.bytedeco.javacpp.BytePointer;
+import org.bytedeco.javacpp.Loader;
 import org.bytedeco.leptonica.BOX;
 import org.bytedeco.leptonica.BOXA;
 import org.bytedeco.leptonica.PIX;
@@ -23,18 +24,17 @@ public class TessTest {
     @Test
     public void test1() {
 
-
         BytePointer outText;
 
         TessBaseAPI api = new TessBaseAPI();
         // Initialize tesseract-ocr with English, without specifying tessdata path
-        if (api.Init("/Users/jiangfei/IdeaProjects/opencv/tesseract/tessdata", "chi_sim") != 0) {
+        if (api.Init("/Users/jiangfei/IdeaProjects/opencv/tesseract/tessdata", "eng") != 0) {
             System.err.println("Could not initialize tesseract.");
             System.exit(1);
         }
 
         // Open input image with leptonica library
-        PIX image = pixRead("/Users/jiangfei/IdeaProjects/opencv/tesseract/22.jpeg");
+        PIX image = pixRead("/Users/jiangfei/IdeaProjects/opencv/tesseract/33.jpeg");
         api.SetImage(image);
         // Get OCR result
         outText = api.GetUTF8Text();

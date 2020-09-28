@@ -23,6 +23,12 @@
             <version>2.1.1</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>25.1-jre</version>
+        </dependency>
+
         <!--<dependency>
             <groupId>com.pi4j</groupId>
             <artifactId>pi4j-core</artifactId>
