@@ -10,7 +10,8 @@ public class Types {
 
     public static ParameterizedType getSuperParameterizedType(Type type, Class<?> superClass) {
         if (type instanceof Class<?> || type instanceof ParameterizedType) {
-            outer: while (type != null && type != Object.class) {
+            outer:
+            while (type != null && type != Object.class) {
                 Class<?> rawType;
                 if (type instanceof Class<?>) {
                     // type is a class
@@ -43,6 +44,12 @@ public class Types {
         }
         return null;
     }
+
+    public static boolean isAssignableToOrFrom(Class<?> classToCheck, Class<?> anotherClass) {
+        return classToCheck.isAssignableFrom(anotherClass)
+                || anotherClass.isAssignableFrom(classToCheck);
+    }
+
 
 
     public static <T> T newInstance(Class<T> clazz) {
@@ -102,6 +109,27 @@ public class Types {
         return new IllegalArgumentException(buf.toString(), e);
     }
 
+    public static boolean isArray(Type type) {
+        return type instanceof GenericArrayType || type instanceof Class<?>
+                && ((Class<?>) type).isArray();
+    }
+
+    /**
+     * Returns the component type of the given array type, assuming {@link #isArray(Type)}.
+     *
+     * <p>
+     * Return type will either be class, parameterized type, generic array type, or type variable, but
+     * not a wildcard type.
+     * </p>
+     *
+     * @throws ClassCastException if {@link #isArray(Type)} is false
+     */
+    public static Type getArrayComponentType(Type array) {
+        return array instanceof GenericArrayType ? ((GenericArrayType) array).getGenericComponentType()
+                : ((Class<?>) array).getComponentType();
+    }
+
+
     public static Class<?> getRawClass(ParameterizedType parameterType) {
         return (Class<?>) parameterType.getRawType();
     }
@@ -153,8 +181,49 @@ public class Types {
         return null;
     }
 
+    public static Class<?> getRawArrayComponentType(List<Type> context, Type componentType) {
+        if (componentType instanceof TypeVariable<?>) {
+            componentType = Types.resolveTypeVariable(context, (TypeVariable<?>) componentType);
+        }
+        if (componentType instanceof GenericArrayType) {
+            Class<?> raw = getRawArrayComponentType(context, Types.getArrayComponentType(componentType));
+            return Array.newInstance(raw, 0).getClass();
+        }
+        if (componentType instanceof Class<?>) {
+            return (Class<?>) componentType;
+        }
+        if (componentType instanceof ParameterizedType) {
+            return Types.getRawClass((ParameterizedType) componentType);
+        }
+        Preconditions.checkArgument(
+                componentType == null, "wildcard type is not supported: %s", componentType);
+        return Object.class;
+    }
 
+    public static Type getIterableParameter(Type iterableType) {
+        return getActualParameterAtPosition(iterableType, Iterable.class, 0);
+    }
 
+    public static Type getMapValueParameter(Type mapType) {
+        return getActualParameterAtPosition(mapType, Map.class, 1);
+    }
+
+    private static Type getActualParameterAtPosition(Type type, Class<?> superClass, int position) {
+        ParameterizedType parameterizedType = Types.getSuperParameterizedType(type, superClass);
+        if (parameterizedType == null) {
+            return null;
+        }
+        Type valueType = parameterizedType.getActualTypeArguments()[position];
+        // this is normally a type variable, except in the case where the class of iterableType is
+        // superClass, e.g. Iterable<String>
+        if (valueType instanceof TypeVariable<?>) {
+            Type resolve = Types.resolveTypeVariable(Arrays.asList(type), (TypeVariable<?>) valueType);
+            if (resolve != null) {
+                return resolve;
+            }
+        }
+        return valueType;
+    }
 
     public static <T> Iterable<T> iterableOf(final Object value) {
         if (value instanceof Iterable<?>) {
@@ -194,5 +263,16 @@ public class Types {
     }
 
 
+    public static Object toArray(Collection<?> collection, Class<?> componentType) {
+        if (componentType.isPrimitive()) {
+            Object array = Array.newInstance(componentType, collection.size());
+            int index = 0;
+            for (Object value : collection) {
+                Array.set(array, index++, value);
+            }
+            return array;
+        }
+        return collection.toArray((Object[]) Array.newInstance(componentType, collection.size()));
+    }
 
 }
